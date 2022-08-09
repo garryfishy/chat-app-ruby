@@ -6,13 +6,5 @@ class CreateUsers < ActiveRecord::Migration[7.0]
 
       t.timestamps
     end
-
-    create_table :chats do |t|
-      t.string :senderId
-      t.string :recieverId
-      t.string :message
-
-      t.timestamps
-    end
   end
 end
