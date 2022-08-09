@@ -1,9 +1,4 @@
 class ApplicationController < ActionController::API
-    def test
-        @user = User.all
-        render json: @user
-
-    end
 
     # JWT START
     def authentication
@@ -38,6 +33,7 @@ class ApplicationController < ActionController::API
     end
     # JWT END
 
+    # method for logging in
 
     def login
         # p "masuk sini"
@@ -62,27 +58,25 @@ class ApplicationController < ActionController::API
         end        
     end
 
-    # before_action :authentication
+    # Method to get Chat between two users
 
     def getMessage(senderId, recieverId)
-        # getChat chat
         findChat = Chat.where("(senderID = #{senderId} AND recieverId = #{recieverId}) OR (senderId = #{recieverId} AND recieverId = #{senderId})")
 
         if findChat.length > 0
             return findChat
         else
-            render json: {
+            return {
                 msg: 'Empty chat room',
                 code: 200
             }
-
         end
 
-        # p "masu"
-    
     end
 
-    def sendMessage
+    # Method to get chat between two users
+
+    def getChat
         if authentication
             recieverId = params["id"].to_i
             checkUser = User.find_by(id: recieverId)
@@ -111,8 +105,61 @@ class ApplicationController < ActionController::API
         end
     end
 
+    # Method to get all messages user included in
 
+    def getMine
+        if authentication
+            decode_data = decodeToken(request.headers["token"])
+            id = decode_data[0]["id"]
+            getMyChat = Chat.where("senderId = #{id} OR recieverId = #{id}")
 
+            if getMyChat.length > 0
+                render json: getMyChat, status 200
+            else
+                render json: {
+                    msg: "No messages found",
+                    code: 404
+                }, status 404
+        else
+            render json: {
+                msg: "Please login", code: 401
+            }, status: 401
+        end
+    end
 
+    # Method to send message between two users
+
+    def sendMessage
+        if authentication
+            recieverId = params["id"].to_i
+            checkUser = User.find_by(id: recieverId)
+
+            if checkUser
+                decode_data = decodeToken(request.headers["token"])
+                senderId = decode_data[0]["id"]
+                message = params["message"]\
+
+                data = {
+                    senderId: senderId,
+                    recieverId: recieverId,
+                    message: message
+                }
+
+                createChat = Chat.create(data)
+
+                if createChat
+                    findChat = getMessage(senderId, recieverId)
+                    # p createChat
+                    render json: findChat
+                end
+
+            end
+
+        else
+            render json: {
+                msg: "Please login", code: 401
+            }, status: 401
+        end
+    end
 
 end
